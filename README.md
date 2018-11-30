@@ -1,2 +1,2 @@
-# tagfetch
-fetches image tags from Gelbooru and Danbooru
+# boorufetch
+fetches booru posts with tags from Gelbooru and Danbooru
