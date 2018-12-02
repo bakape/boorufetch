@@ -60,14 +60,30 @@ type Tag struct {
 	Tag  string  `json:"tag"`
 }
 
-// Single booru image post
-type Post struct {
-	Rating    Rating    `json:"rating"`
-	MD5       [16]byte  `json:"md5"`
-	FileURL   string    `json:"file_url"`
-	SampleURL string    `json:"sample_url"`
-	Source    string    `json:"source"`
-	Tags      []Tag     `json:"tags"`
-	UpdatedOn time.Time `json:"updated_on"`
-	CreatedOn time.Time `json:"created_on"`
+// Single booru image post. Fields are lazily converted on demand for
+// optimization purposes.
+type Post interface {
+	// Return explicitness rating
+	Rating() Rating
+
+	// Return MD5 hash
+	MD5() ([16]byte, error)
+
+	// Return source file URL
+	FileURL() string
+
+	// Return sample file image URL or source file URL, if no sample present
+	SampleURL() string
+
+	// Return source URL, if any
+	SourceURL() string
+
+	// Return tags applied to post
+	Tags() []Tag
+
+	// Return last modification date
+	UpdatedOn() (time.Time, error)
+
+	// Return post creation date
+	CreatedOn() (time.Time, error)
 }

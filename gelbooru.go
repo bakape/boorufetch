@@ -15,55 +15,65 @@ import (
 var gelbooruBalancer = newLoadBalancer("https", "gelbooru.com")
 
 // Struct for decoding, augmenting and converting Gelbooru JSON responses
-type GelbooruDecoder struct {
-	Rating    Rating `json:"rating"`
-	Sample    bool   `json:"sample"`
-	ChangedOn int64  `json:"change"`
-	MD5       string `json:"hash"`
-	FileURL   string `json:"file_url"`
-	Directory string `json:"directory"`
-	Tags      []Tag  `json:"-"`
-	CreatedOn string `json:"created_at"`
-	Source    string `json:"source"`
+type gelbooruDecoder struct {
+	Rating_    Rating `json:"rating"`
+	Sample     bool
+	Change     int64
+	Hash       string
+	File_url   string
+	Directory  string
+	Created_at string
+	Source     string
+	tags       []Tag
 }
 
 // Fetch more detailed tags than availbale from the JSON API
-func (d *GelbooruDecoder) FetchTags() (err error) {
-	r, err := GelbooruFetchPage(fmt.Sprintf("md5:"+d.MD5), false, 0)
+func (d *gelbooruDecoder) fetchTags() (err error) {
+	r, err := GelbooruFetchPage(fmt.Sprintf("md5:"+d.Hash), false, 0)
 	if err != nil {
 		return
 	}
 	defer r.Close()
-	d.Tags, err = gelbooruParseTags(r)
+	d.tags, err = gelbooruParseTags(r)
 	return
 }
 
-// Convert to Post
-func (d GelbooruDecoder) ToPost() (p Post, err error) {
-	p.Rating = d.Rating
-	p.Tags = d.Tags
-	p.Source = d.Source
-	p.MD5, err = decodeMD5(d.MD5)
-	if err != nil {
-		return
-	}
+func (d gelbooruDecoder) Rating() Rating {
+	return d.Rating_
+}
 
-	p.CreatedOn, err = time.Parse(time.RubyDate, d.CreatedOn)
-	if err != nil {
-		return
-	}
-	p.CreatedOn = p.CreatedOn.UTC()
-	p.UpdatedOn = time.Unix(d.ChangedOn, 0).UTC()
+func (d gelbooruDecoder) MD5() ([16]byte, error) {
+	return decodeMD5(d.Hash)
+}
 
-	p.FileURL = d.FileURL
+func (d gelbooruDecoder) FileURL() string {
+	return d.File_url
+}
+
+func (d gelbooruDecoder) SampleURL() string {
 	if d.Sample {
-		p.SampleURL = fmt.Sprintf(
+		return fmt.Sprintf(
 			"https://simg3.gelbooru.com/samples/%s/sample_%s.jpg",
-			d.Directory, d.MD5)
-	} else {
-		p.SampleURL = p.FileURL
+			d.Directory, d.Hash)
 	}
+	return d.File_url
+}
 
+func (d gelbooruDecoder) SourceURL() string {
+	return d.Source
+}
+
+func (d gelbooruDecoder) Tags() []Tag {
+	return d.tags
+}
+
+func (d gelbooruDecoder) UpdatedOn() (time.Time, error) {
+	return time.Unix(d.Change, 0).UTC(), nil
+}
+
+func (d gelbooruDecoder) CreatedOn() (t time.Time, err error) {
+	t, err = time.Parse(time.RubyDate, d.Created_at)
+	t = t.UTC()
 	return
 }
 
@@ -106,7 +116,7 @@ func FromGelbooru(query string, page uint) (posts []Post, err error) {
 	}
 	defer r.Close()
 
-	var dec []GelbooruDecoder
+	var dec []gelbooruDecoder
 	err = json.NewDecoder(r).Decode(&dec)
 	if err != nil || len(dec) == 0 {
 		return
@@ -116,14 +126,11 @@ func FromGelbooru(query string, page uint) (posts []Post, err error) {
 	for i := range dec {
 		// TODO: Fetch fresher tags and rating from Danbooru
 
-		err = dec[i].FetchTags()
+		err = dec[i].fetchTags()
 		if err != nil {
 			return
 		}
-		posts[i], err = dec[i].ToPost()
-		if err != nil {
-			return
-		}
+		posts[i] = dec[i]
 	}
 
 	return
