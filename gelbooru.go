@@ -7,11 +7,65 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 )
 
 var gelbooruBalancer = newLoadBalancer("https", "gelbooru.com")
+
+// Struct for decoding, augmenting and converting Gelbooru JSON responses
+type GelbooruDecoder struct {
+	Rating    Rating `json:"rating"`
+	Sample    bool   `json:"sample"`
+	ChangedOn int64  `json:"change"`
+	MD5       string `json:"hash"`
+	FileURL   string `json:"file_url"`
+	Directory string `json:"directory"`
+	Tags      []Tag  `json:"-"`
+	CreatedOn string `json:"created_at"`
+	Source    string `json:"source"`
+}
+
+// Fetch more detailed tags than availbale from the JSON API
+func (d *GelbooruDecoder) FetchTags() (err error) {
+	r, err := GelbooruFetchPage(fmt.Sprintf("md5:"+d.MD5), false, 0)
+	if err != nil {
+		return
+	}
+	defer r.Close()
+	d.Tags, err = gelbooruParseTags(r)
+	return
+}
+
+// Convert to Post
+func (d GelbooruDecoder) ToPost() (p Post, err error) {
+	p.Rating = d.Rating
+	p.Tags = d.Tags
+	p.Source = d.Source
+	p.MD5, err = decodeMD5(d.MD5)
+	if err != nil {
+		return
+	}
+
+	p.CreatedOn, err = time.Parse(time.RubyDate, d.CreatedOn)
+	if err != nil {
+		return
+	}
+	p.CreatedOn = p.CreatedOn.UTC()
+	p.UpdatedOn = time.Unix(d.ChangedOn, 0).UTC()
+
+	p.FileURL = d.FileURL
+	if d.Sample {
+		p.SampleURL = fmt.Sprintf(
+			"https://simg3.gelbooru.com/samples/%s/sample_%s.jpg",
+			d.Directory, d.MD5)
+	} else {
+		p.SampleURL = p.FileURL
+	}
+
+	return
+}
 
 // Makes request to a gelbooru page with selected tag query
 func GelbooruFetchPage(query string, json bool, page uint) (
@@ -50,28 +104,23 @@ func FromGelbooru(query string, page uint) (posts []Post, err error) {
 	if err != nil {
 		return
 	}
-	defer func() {
-		if r != nil {
-			r.Close()
-		}
-	}()
-	err = json.NewDecoder(r).Decode(&posts)
-	if err != nil || len(posts) == 0 {
+	defer r.Close()
+
+	var dec []GelbooruDecoder
+	err = json.NewDecoder(r).Decode(&dec)
+	if err != nil || len(dec) == 0 {
 		return
 	}
 
-	for i := range posts {
+	posts = make([]Post, len(dec))
+	for i := range dec {
 		// TODO: Fetch fresher tags and rating from Danbooru
 
-		if r != nil {
-			r.Close()
-			r = nil
-		}
-		r, err = GelbooruFetchPage(fmt.Sprintf("md5:"+posts[i].Hash), false, 0)
+		err = dec[i].FetchTags()
 		if err != nil {
 			return
 		}
-		posts[i].Tags, err = gelbooruParseTags(r)
+		posts[i], err = dec[i].ToPost()
 		if err != nil {
 			return
 		}
@@ -158,7 +207,8 @@ func gelbooruScrapeTags(n *html.Node, t *[]Tag) {
 		default:
 			tag.Type = Undefined
 		}
-		tag.Tag = html.UnescapeString(text.Data)
+
+		tag.Tag = strings.Replace(html.UnescapeString(text.Data), " ", "_", -1)
 		*t = append(*t, tag)
 	}
 }

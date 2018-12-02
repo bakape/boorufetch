@@ -2,8 +2,14 @@ package boorufetch
 
 import (
 	"fmt"
+	"strconv"
+	"time"
 )
 
+// Number of parallel fetch workers
+const FetcherCount = 4
+
+// Tag category
 type TagType uint8
 
 const (
@@ -23,44 +29,45 @@ const (
 	Explicit
 )
 
+var ratingRunes = [...]byte{'s', 'q', 'e'}
+
+func (r *Rating) UnmarshalJSON(buf []byte) error {
+	if len(buf) < 3 {
+		return ErrUnknownRating(buf)
+	}
+	for i := 0; i < 3; i++ {
+		if buf[1] == ratingRunes[i] {
+			*r = Rating(i)
+			return nil
+		}
+	}
+	return ErrUnknownRating(buf)
+}
+
+func (r *Rating) MarshalJSON() ([]byte, error) {
+	return strconv.AppendQuoteRune(nil, rune(ratingRunes[int(*r)])), nil
+}
+
 type ErrUnknownRating []byte
 
 func (e ErrUnknownRating) Error() string {
 	return fmt.Sprintf("unknown rating: `%s`", string(e))
 }
 
-func (r *Rating) UnmarshalJSON(buf []byte) (err error) {
-	if len(buf) < 3 {
-		return ErrUnknownRating(buf)
-	}
-	switch buf[1] {
-	case 's':
-		*r = Safe
-	case 'q':
-		*r = Questionable
-	case 'e':
-		*r = Explicit
-	default:
-		return ErrUnknownRating(buf)
-	}
-	return nil
-}
-
-// Number of parallel fetch workers
-const FetcherCount = 4
-
+// Tag associated to a post
 type Tag struct {
 	Type TagType `json:"type"`
 	Tag  string  `json:"tag"`
 }
 
+// Single booru image post
 type Post struct {
-	Rating    Rating `json:"rating"`
-	Sample    bool   `json:"sample"`
-	ChangedOn int64  `json:"change"`
-	Hash      string `json:"hash"`
-	Owner     string `json:"owner"`
-	FileURL   string `json:"file_url"`
-	Directory string `json:"directory"`
-	Tags      []Tag  `json:"-"`
+	Rating    Rating    `json:"rating"`
+	MD5       [16]byte  `json:"md5"`
+	FileURL   string    `json:"file_url"`
+	SampleURL string    `json:"sample_url"`
+	Source    string    `json:"source"`
+	Tags      []Tag     `json:"tags"`
+	UpdatedOn time.Time `json:"updated_on"`
+	CreatedOn time.Time `json:"created_on"`
 }
