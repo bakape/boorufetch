@@ -4,8 +4,14 @@ import (
 	"testing"
 )
 
-func TestFetch(t *testing.T) {
-	posts, err := FromGelbooru("sakura_kyouko", 0)
+func TestGelbooruFetch(t *testing.T) {
+	posts, err := FromGelbooru("sakura_kyouko", 0, 3)
+	logPosts(t, posts, err)
+}
+
+func logPosts(t *testing.T, posts []Post, err error) {
+	t.Helper()
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -16,6 +22,11 @@ func TestFetch(t *testing.T) {
 		if i == 10 {
 			break
 		}
-		t.Logf("%v\n", p)
+		t.Logf("\t\n%v\n%v\n", p, p.Tags())
 	}
+}
+
+func TestDanbooruFetch(t *testing.T) {
+	posts, err := FromDanbooru("sakura_kyouko", 0, 3)
+	logPosts(t, posts, err)
 }

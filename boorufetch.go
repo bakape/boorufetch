@@ -62,6 +62,11 @@ type Tag struct {
 
 // Single booru image post. Fields are lazily converted on demand for
 // optimization purposes.
+//
+// Note that storing a large number of these in memory can be intensive both for
+// memory consumption and garbage collection. In that case it is recomened to
+// extract the required data from Post and allow the underlying structures to be
+// deallocated.
 type Post interface {
 	// Return explicitness rating
 	Rating() Rating
@@ -77,6 +82,12 @@ type Post interface {
 
 	// Return source URL, if any
 	SourceURL() string
+
+	// Return source file width
+	Width() uint64
+
+	// Return source file height
+	Height() uint64
 
 	// Return tags applied to post
 	Tags() []Tag
