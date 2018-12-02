@@ -19,6 +19,9 @@ func decodeMD5(s string) (buf [16]byte, err error) {
 }
 
 func parseTime(layout, s string) (t time.Time, err error) {
+	if s == "" {
+		return
+	}
 	t, err = time.Parse(layout, s)
 	t = t.Round(time.Second).UTC()
 	return
