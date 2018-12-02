@@ -1,3 +1,6 @@
+// Package boorufetch provides a unified interface for fetching posts from
+// Gelbooru and Danbooru.
+
 package boorufetch
 
 import (
