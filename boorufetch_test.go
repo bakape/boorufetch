@@ -1,13 +1,13 @@
 package boorufetch
 
 import (
+	"bytes"
+	"fmt"
+	"reflect"
 	"testing"
-)
 
-func TestGelbooruFetch(t *testing.T) {
-	posts, err := FromGelbooru("sakura_kyouko", 0, 3)
-	logPosts(t, posts, err)
-}
+	"github.com/olekukonko/tablewriter"
+)
 
 func logPosts(t *testing.T, posts []Post, err error) {
 	t.Helper()
@@ -18,15 +18,34 @@ func logPosts(t *testing.T, posts []Post, err error) {
 	if len(posts) == 0 {
 		t.Fatal("no images found")
 	}
+
+	typ := reflect.TypeOf((*Post)(nil)).Elem()
+	var buf bytes.Buffer
 	for i, p := range posts {
 		if i == 10 {
 			break
 		}
-		t.Logf("\t\n%v\n%v\n", p, p.Tags())
-	}
-}
 
-func TestDanbooruFetch(t *testing.T) {
-	posts, err := FromDanbooru("sakura_kyouko", 0, 3)
-	logPosts(t, posts, err)
+		buf.Reset()
+		w := tablewriter.NewWriter(&buf)
+		w.SetAlignment(tablewriter.ALIGN_LEFT)
+		w.SetColWidth(80)
+		w.SetRowLine(true)
+
+		val := reflect.ValueOf(p)
+		for i := 0; i < typ.NumMethod(); i++ {
+			name := typ.Method(i).Name
+			re := val.MethodByName(name).Call(nil)
+			if len(re) == 2 {
+				err := re[1].Interface()
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			w.Append([]string{name, fmt.Sprint(re[0])})
+		}
+
+		w.Render()
+		t.Logf("\n%s\n", buf.String())
+	}
 }

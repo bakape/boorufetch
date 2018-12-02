@@ -32,7 +32,10 @@ const (
 	Explicit
 )
 
-var ratingRunes = [...]byte{'s', 'q', 'e'}
+var (
+	ratingRunes   = [...]byte{'s', 'q', 'e'}
+	ratingStrings = [...]string{"safe", "questionable", "explicit"}
+)
 
 func (r *Rating) UnmarshalJSON(buf []byte) error {
 	if len(buf) < 3 {
@@ -47,8 +50,12 @@ func (r *Rating) UnmarshalJSON(buf []byte) error {
 	return ErrUnknownRating(buf)
 }
 
-func (r *Rating) MarshalJSON() ([]byte, error) {
-	return strconv.AppendQuoteRune(nil, rune(ratingRunes[int(*r)])), nil
+func (r Rating) MarshalJSON() ([]byte, error) {
+	return strconv.AppendQuoteRune(nil, rune(ratingRunes[int(r)])), nil
+}
+
+func (r Rating) String() string {
+	return ratingStrings[int(r)]
 }
 
 type ErrUnknownRating []byte
