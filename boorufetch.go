@@ -70,16 +70,11 @@ type Tag struct {
 	Tag  string  `json:"tag"`
 }
 
-// Single booru image post. Fields are lazily converted on demand for
-// optimization purposes.
-//
-// Note that storing a large number of these in memory can be intensive both for
-// memory consumption and garbage collection. In that case it is recomened to
-// extract the required data from Post and allow the underlying structures to be
-// deallocated.
+// Single booru image post. Fields are lazily fetched and/or converted on demand
+// for optimization purposes.
 type Post interface {
 	// Return explicitness rating
-	Rating() Rating
+	Rating() (Rating, error)
 
 	// Return MD5 hash
 	MD5() ([16]byte, error)
@@ -100,7 +95,7 @@ type Post interface {
 	Height() uint64
 
 	// Return tags applied to post
-	Tags() []Tag
+	Tags() ([]Tag, error)
 
 	// Return last modification date
 	UpdatedOn() (time.Time, error)

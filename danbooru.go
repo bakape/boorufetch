@@ -14,9 +14,14 @@ type danbooruDecoder struct {
 	decoderCommon
 	danbooruTagDecoder
 	Has_large                              bool
+	Rating_                                Rating `json:"rating"`
 	Image_width, Image_height              uint64
 	Large_file_url, Updated_at, Created_at string
 	Hash                                   string `json:"md5"`
+}
+
+func (d danbooruDecoder) Rating() (Rating, error) {
+	return d.Rating_, nil
 }
 
 func (d danbooruDecoder) MD5() ([16]byte, error) {
@@ -66,9 +71,9 @@ func (d *danbooruTagDecoder) parse(typ TagType, s *string) {
 	*s = "" // Free up memory
 }
 
-func (d *danbooruTagDecoder) Tags() []Tag {
+func (d *danbooruTagDecoder) Tags() ([]Tag, error) {
 	if d.cached != nil {
-		return d.cached
+		return d.cached, nil
 	}
 	d.cached = make([]Tag, 0, 64)
 
@@ -78,7 +83,7 @@ func (d *danbooruTagDecoder) Tags() []Tag {
 	d.parse(Undefined, &d.Tag_string_general)
 	d.parse(Meta, &d.Tag_string_meta)
 
-	return d.cached
+	return d.cached, nil
 }
 
 func danbooruURL(q url.Values) string {

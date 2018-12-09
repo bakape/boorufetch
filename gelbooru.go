@@ -18,7 +18,8 @@ var gelbooruBalancer = newLoadBalancer("https", "gelbooru.com")
 type gelbooruDecoder struct {
 	decoderCommon
 	tagParser
-	Sample                             bool
+	Sample, isFetched                  bool
+	Rating_                            Rating `json:"rating"`
 	Change                             int64
 	Height_                            uint64 `json:"height"`
 	Width_                             uint64 `json:"width"`
@@ -27,18 +28,62 @@ type gelbooruDecoder struct {
 }
 
 type tagParser interface {
-	Tags() []Tag
+	Tags() ([]Tag, error)
 }
 
-// Fetch more detailed tags than availbale from the JSON API
-func (d *gelbooruDecoder) fetchTags() (err error) {
-	r, err := GelbooruFetchPage(fmt.Sprintf("md5:"+d.Hash), false, 0, 1)
+// Lazily fetch and parse the resource to speed up large page queries
+func (d *gelbooruDecoder) fetch() (err error) {
+	if d.isFetched {
+		return nil
+	}
+
+	if d.Owner == "danbooru" {
+		//  Fetch fresher tags and rating from Danbooru
+		var danDec danbooruDecoder
+		danDec, err = danbooruByMD5(d.Hash)
+		if err != nil {
+			return
+		}
+		d.Rating_, err = danDec.Rating()
+		if err != nil {
+			return
+		}
+		d.updatedOnOverride, err = danDec.UpdatedOn()
+		if err != nil {
+			return
+		}
+		d.tagParser = &danDec.danbooruTagDecoder
+	} else {
+		var r io.ReadCloser
+		r, err = GelbooruFetchPage(fmt.Sprintf("md5:"+d.Hash), false, 0, 1)
+		if err != nil {
+			return
+		}
+		defer r.Close()
+		d.tagParser, err = newGelbooruTagParser(r)
+		if err != nil {
+			return
+		}
+	}
+
+	d.isFetched = true
+	return
+}
+
+func (d *gelbooruDecoder) Tags() (t []Tag, err error) {
+	err = d.fetch()
 	if err != nil {
 		return
 	}
-	defer r.Close()
-	d.tagParser, err = newGelbooruTagParser(r)
-	return
+	return d.tagParser.Tags()
+}
+
+func (d *gelbooruDecoder) Rating() (r Rating, err error) {
+	err = d.fetch()
+	if err != nil {
+		return
+	}
+	return d.Rating_, nil
 }
 
 func (d gelbooruDecoder) MD5() ([16]byte, error) {
@@ -54,7 +99,11 @@ func (d gelbooruDecoder) SampleURL() string {
 	return d.File_url
 }
 
-func (d gelbooruDecoder) UpdatedOn() (time.Time, error) {
+func (d *gelbooruDecoder) UpdatedOn() (t time.Time, err error) {
+	err = d.fetch()
+	if err != nil {
+		return
+	}
 	if d.updatedOnOverride.IsZero() {
 		return time.Unix(d.Change, 0).UTC(), nil
 	}
@@ -119,27 +168,8 @@ func FromGelbooru(query string, page, limit uint) (posts []Post, err error) {
 	}
 
 	posts = make([]Post, len(dec))
-	for i := range dec {
-		if dec[i].Owner == "danbooru" {
-			//  Fetch fresher tags and rating from Danbooru
-			var danDec danbooruDecoder
-			danDec, err = danbooruByMD5(dec[i].Hash)
-			if err != nil {
-				return
-			}
-			dec[i].Rating_ = danDec.Rating()
-			dec[i].updatedOnOverride, err = danDec.UpdatedOn()
-			if err != nil {
-				return
-			}
-			dec[i].tagParser = &danDec.danbooruTagDecoder
-		} else {
-			err = dec[i].fetchTags()
-			if err != nil {
-				return
-			}
-		}
-		posts[i] = dec[i]
+	for i, d := range dec {
+		posts[i] = &d
 	}
 
 	return
@@ -182,9 +212,9 @@ func (p *gelbooruTagParser) findTags(n *html.Node) *html.Node {
 	return nil
 }
 
-func (p *gelbooruTagParser) Tags() (tags []Tag) {
+func (p *gelbooruTagParser) Tags() (tags []Tag, err error) {
 	if p.cached != nil {
-		return p.cached
+		return p.cached, nil
 	}
 	if p.root == nil {
 		return
