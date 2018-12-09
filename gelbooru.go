@@ -127,6 +127,7 @@ func FromGelbooru(query string, page, limit uint) (posts []Post, err error) {
 			if err != nil {
 				return
 			}
+			dec[i].Rating_ = danDec.Rating()
 			dec[i].updatedOnOverride, err = danDec.UpdatedOn()
 			if err != nil {
 				return
