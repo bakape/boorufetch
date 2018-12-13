@@ -2,6 +2,7 @@ package boorufetch
 
 import (
 	"encoding/json"
+	"io"
 	"net/url"
 	"strconv"
 	"strings"
@@ -113,7 +114,15 @@ func FromDanbooru(query string, page, limit uint) (posts []Post, err error) {
 
 	var dec []danbooruDecoder
 	err = json.NewDecoder(r).Decode(&dec)
-	if err != nil {
+	switch err {
+	case nil:
+	case io.EOF:
+		err = nil
+		return
+	default:
+		return
+	}
+	if len(dec) == 0 {
 		return
 	}
 

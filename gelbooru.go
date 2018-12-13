@@ -163,7 +163,15 @@ func FromGelbooru(query string, page, limit uint) (posts []Post, err error) {
 
 	var dec []gelbooruDecoder
 	err = json.NewDecoder(r).Decode(&dec)
-	if err != nil || len(dec) == 0 {
+	switch err {
+	case nil:
+	case io.EOF:
+		err = nil
+		return
+	default:
+		return
+	}
+	if len(dec) == 0 {
 		return
 	}
 
