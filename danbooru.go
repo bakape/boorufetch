@@ -1,6 +1,7 @@
 package boorufetch
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/url"
@@ -145,4 +146,13 @@ func danbooruByMD5(md5 string) (dec danbooruDecoder, err error) {
 	defer r.Close()
 	err = json.NewDecoder(r).Decode(&dec)
 	return
+}
+
+// Fetch a single danbooru post by MD5. If no match found, Post will be nil.
+func DanbooruByMD5(md5 [16]byte) (Post, error) {
+	d, err := danbooruByMD5(hex.EncodeToString(md5[:]))
+	if d.FileURL() == "" { // Zero value check
+		return nil, err
+	}
+	return &d, err
 }

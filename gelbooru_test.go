@@ -4,7 +4,7 @@ import "testing"
 
 func TestGelbooruFetch(t *testing.T) {
 	posts, err := FromGelbooru("sakura_kyouko", 0, 5)
-	logPosts(t, posts, err)
+	logPosts(t, err, posts...)
 }
 
 func TestGelbooruNoMatch(t *testing.T) {

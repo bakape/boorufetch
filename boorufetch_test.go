@@ -9,7 +9,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-func logPosts(t *testing.T, posts []Post, err error) {
+func logPosts(t *testing.T, err error, posts ...Post) {
 	t.Helper()
 
 	if err != nil {
