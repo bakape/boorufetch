@@ -278,6 +278,7 @@ func (p *gelbooruTagParser) Tags() (tags []Tag, err error) {
 	}
 
 	p.cached = tags
+	dedupTags(&p.cached)
 	p.root = nil
 	return
 }

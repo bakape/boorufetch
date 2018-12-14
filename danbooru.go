@@ -84,6 +84,7 @@ func (d *danbooruTagDecoder) Tags() ([]Tag, error) {
 	d.parse(Undefined, &d.Tag_string_general)
 	d.parse(Meta, &d.Tag_string_meta)
 
+	dedupTags(&d.cached)
 	return d.cached, nil
 }
 

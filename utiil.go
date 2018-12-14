@@ -26,3 +26,16 @@ func parseTime(layout, s string) (t time.Time, err error) {
 	t = t.Round(time.Second).UTC()
 	return
 }
+
+// Deduplicate tags array
+func dedupTags(tags *[]Tag) {
+	tmp := make(map[Tag]struct{}, len(*tags))
+
+	for _, t := range *tags {
+		tmp[t] = struct{}{}
+	}
+	*tags = (*tags)[:0]
+	for t := range tmp {
+		*tags = append(*tags, t)
+	}
+}
