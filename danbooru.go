@@ -27,7 +27,7 @@ func (d danbooruDecoder) Rating() (Rating, error) {
 }
 
 func (d danbooruDecoder) MD5() ([16]byte, error) {
-	return decodeMD5(d.Hash)
+	return DecodeMD5(d.Hash)
 }
 
 func (d danbooruDecoder) SampleURL() string {

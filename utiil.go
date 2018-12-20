@@ -7,7 +7,7 @@ import (
 )
 
 // Decode hex string to MD5 hash
-func decodeMD5(s string) (buf [16]byte, err error) {
+func DecodeMD5(s string) (buf [16]byte, err error) {
 	n, err := hex.Decode(buf[:], []byte(s))
 	if err != nil {
 		return

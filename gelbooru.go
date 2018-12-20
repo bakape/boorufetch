@@ -87,7 +87,7 @@ func (d *gelbooruDecoder) Rating() (r Rating, err error) {
 }
 
 func (d gelbooruDecoder) MD5() ([16]byte, error) {
-	return decodeMD5(d.Hash)
+	return DecodeMD5(d.Hash)
 }
 
 func (d gelbooruDecoder) SampleURL() string {

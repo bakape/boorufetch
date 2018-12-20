@@ -18,7 +18,7 @@ func TestDanbooruNoMatch(t *testing.T) {
 }
 
 func TestDanbooruByMD5(t *testing.T) {
-	hash, err := decodeMD5("39b1f4f5298c446b483b858335d85fc7")
+	hash, err := DecodeMD5("39b1f4f5298c446b483b858335d85fc7")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +27,7 @@ func TestDanbooruByMD5(t *testing.T) {
 }
 
 func TestDanbooruByMD5NoPost(t *testing.T) {
-	hash, err := decodeMD5("39b1f4f5298c446b483c858335d85fc7")
+	hash, err := DecodeMD5("39b1f4f5298c446b483c858335d85fc7")
 	if err != nil {
 		t.Fatal(err)
 	}
