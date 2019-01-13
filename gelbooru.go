@@ -176,8 +176,8 @@ func FromGelbooru(query string, page, limit uint) (posts []Post, err error) {
 	}
 
 	posts = make([]Post, len(dec))
-	for i, d := range dec {
-		posts[i] = &d
+	for i := range dec {
+		posts[i] = &dec[i]
 	}
 
 	return
