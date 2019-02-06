@@ -31,10 +31,13 @@ func newLoadBalancer(scheme, host string) *loadBalancer {
 			for {
 				req := <-l.queue
 				r, err := http.Get(req.url)
-				req.res <- response{
-					r:   r.Body,
+				res := response{
 					err: err,
 				}
+				if r != nil {
+					res.r = r.Body
+				}
+				req.res <- res
 			}
 		}()
 	}
