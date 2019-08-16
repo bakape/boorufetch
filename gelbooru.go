@@ -79,9 +79,11 @@ func (d *gelbooruDecoder) Tags() (t []Tag, err error) {
 }
 
 func (d *gelbooruDecoder) Rating() (r Rating, err error) {
-	err = d.fetch()
-	if err != nil {
-		return
+	if d.Owner == "danbooru" {
+		err = d.fetch()
+		if err != nil {
+			return
+		}
 	}
 	return d.Rating_, nil
 }

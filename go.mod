@@ -1,3 +1,7 @@
 module github.com/bakape/boorufetch
 
-require golang.org/x/net v0.0.0-20181201002055-351d144fa1fc
+require (
+	github.com/mattn/go-runewidth v0.0.4 // indirect
+	github.com/olekukonko/tablewriter v0.0.1
+	golang.org/x/net v0.0.0-20181201002055-351d144fa1fc
+)
