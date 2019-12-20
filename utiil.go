@@ -30,10 +30,14 @@ func parseTime(layout, s string) (t time.Time, err error) {
 // Deduplicate tags array
 func dedupTags(tags *[]Tag) {
 	tmp := make(map[Tag]struct{}, len(*tags))
-
 	for _, t := range *tags {
 		tmp[t] = struct{}{}
 	}
+
+	if len(*tags) == len(tmp) {
+		return
+	}
+
 	*tags = (*tags)[:0]
 	for t := range tmp {
 		*tags = append(*tags, t)
