@@ -55,7 +55,7 @@ func (d *gelbooruDecoder) fetch() (err error) {
 		d.tagParser = &danDec.danbooruTagDecoder
 	} else {
 		var r io.ReadCloser
-		r, err = GelbooruFetchPage(fmt.Sprintf("md5:"+d.Hash), false, 0, 1)
+		r, err = GelbooruFetchPage("md5:"+d.Hash, false, 0, 1)
 		if err != nil {
 			return
 		}
