@@ -14,11 +14,27 @@ import (
 
 var gelbooruBalancer = newLoadBalancer("https", "gelbooru.com")
 
+// Unmarshals fields that can be both bool and int into bool
+type blint bool
+
+func (b *blint) UnmarshalJSON(p []byte) (err error) {
+	switch string(p) {
+	case "1", "true":
+		*b = true
+	case "0", "false":
+		*b = false
+	default:
+		return fmt.Errorf("could not unmarshal blint: %s", string(p))
+	}
+	return nil
+}
+
 // Struct for decoding, augmenting and converting Gelbooru JSON responses
 type gelbooruDecoder struct {
 	decoderCommon
 	tagParser
-	Sample, isFetched                  bool
+	Sample                             blint
+	isFetched                          bool
 	Rating_                            Rating `json:"rating"`
 	Change                             int64
 	Height_                            uint64 `json:"height"`
