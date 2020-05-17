@@ -1,6 +1,7 @@
 package boorufetch
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"time"
@@ -42,4 +43,12 @@ func dedupTags(tags *[]Tag) {
 	for t := range tmp {
 		*tags = append(*tags, t)
 	}
+}
+
+type dummyCLoser struct {
+	*bytes.Reader
+}
+
+func (dummyCLoser) Close() error {
+	return nil
 }

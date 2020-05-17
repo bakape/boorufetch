@@ -1,16 +1,23 @@
 package boorufetch
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 )
 
-var danbooruBalancer = newLoadBalancer("https", "danbooru.donmai.us")
+var (
+	danbooruBalancer = newLoadBalancer("https", "danbooru.donmai.us")
+	logRequests      = os.Getenv("LOG_REQUESTS") == "1"
+)
 
 type danbooruDecoder struct {
 	decoderCommon
@@ -104,16 +111,28 @@ func danbooruURL(q url.Values) string {
 // Fetches are limited to a maximum of FetcherCount concurrent requests to
 // prevent antispam measures by the boorus.
 func FromDanbooru(query string, page, limit uint) (posts []Post, err error) {
-	r, err := danbooruBalancer.Fetch(danbooruURL(url.Values{
+	u := danbooruURL(url.Values{
 		"tags":  {query},
 		"page":  {strconv.FormatUint(uint64(page), 10)},
 		"limit": {strconv.FormatUint(uint64(limit), 10)},
-	}))
+	})
+	r, err := danbooruBalancer.Fetch(u)
 	if err != nil {
 		return
 	}
 	defer r.Close()
 
+	if logRequests {
+		var buf []byte
+		buf, err = ioutil.ReadAll(r)
+		if err != nil {
+			return
+		}
+		fmt.Printf("fetched from %s: %s", u, string(buf))
+
+		r.Close()
+		r = dummyCLoser{bytes.NewReader(buf)}
+	}
 	var dec []danbooruDecoder
 	err = json.NewDecoder(r).Decode(&dec)
 	switch err {
