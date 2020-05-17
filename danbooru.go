@@ -128,7 +128,7 @@ func FromDanbooru(query string, page, limit uint) (posts []Post, err error) {
 		if err != nil {
 			return
 		}
-		fmt.Printf("fetched from %s: %s", u, string(buf))
+		fmt.Printf("fetched from %s: %s\n", u, string(buf))
 
 		r.Close()
 		r = dummyCLoser{bytes.NewReader(buf)}
