@@ -43,7 +43,9 @@ func newLoadBalancer(scheme, host string) *loadBalancer {
 					}
 					if r != nil {
 						switch r.StatusCode {
-						case 200, 201:
+						// 404 returns a valid response and is handled by tbe
+						// caller
+						case 200, 201, 404:
 							res.r = r.Body
 						case 429, 500, 502, 503, 504:
 							if r.Body != nil {
