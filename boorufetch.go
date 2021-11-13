@@ -10,7 +10,7 @@ import (
 )
 
 // Number of parallel fetch workers
-const FetcherCount = 2
+const FetcherCount = 4
 
 // Tag category
 type TagType uint8
