@@ -53,7 +53,7 @@ func newLoadBalancer(scheme, host string) *loadBalancer {
 								`GET %s returned status code %d; try %d/3`,
 								req.url,
 								r.StatusCode,
-								i,
+								i+1,
 							)
 							if i != 3 {
 								s += `; retrying in 10s`
