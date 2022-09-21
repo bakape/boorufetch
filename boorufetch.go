@@ -27,21 +27,22 @@ const (
 type Rating uint8
 
 const (
-	Safe Rating = iota
+	General Rating = iota
+	Sensitive
 	Questionable
 	Explicit
 )
 
 var (
-	ratingRunes   = [...]byte{'s', 'q', 'e'}
-	ratingStrings = [...]string{"safe", "questionable", "explicit"}
+	ratingRunes   = [...]byte{'g', 's', 'q', 'e'}
+	ratingStrings = [...]string{"general", "sensitive", "questionable", "explicit"}
 )
 
 func (r *Rating) UnmarshalJSON(buf []byte) error {
 	if len(buf) < 3 {
 		return ErrUnknownRating(buf)
 	}
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 4; i++ {
 		if buf[1] == ratingRunes[i] {
 			*r = Rating(i)
 			return nil
