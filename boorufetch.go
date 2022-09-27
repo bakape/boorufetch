@@ -28,14 +28,14 @@ type Rating uint8
 
 const (
 	General Rating = iota
-	Sensitive
 	Questionable
 	Explicit
+	Sensitive
 )
 
 var (
-	ratingRunes   = [...]byte{'g', 's', 'q', 'e'}
-	ratingStrings = [...]string{"general", "sensitive", "questionable", "explicit"}
+	ratingRunes   = [...]byte{'g', 'q', 'e', 's'}
+	ratingStrings = [...]string{"general", "questionable", "explicit", "sensitive"}
 )
 
 func (r *Rating) UnmarshalJSON(buf []byte) error {
