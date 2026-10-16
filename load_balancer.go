@@ -60,7 +60,7 @@ func newLoadBalancer(scheme, host string) *loadBalancer {
 							if i != 3 {
 								s += `; retrying in 10s`
 							}
-							log.Printf(s)
+							log.Println(s)
 							time.Sleep(time.Second * 10)
 							continue try
 						default:
